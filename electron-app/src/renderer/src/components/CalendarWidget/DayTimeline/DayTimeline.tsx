@@ -384,12 +384,15 @@ export const DayTimeline = ({
         newEndTime.setMinutes(newEndTime.getMinutes() + deltaMinutes)
       }
 
-      // Basic validation
-      if (newEndTime <= newStartTime) {
+      // Basic validation - enforce minimum 5 minute duration
+      const minDurationMs = 5 * 60 * 1000; // 5 minutes
+      const currentDurationMs = newEndTime.getTime() - newStartTime.getTime();
+      
+      if (currentDurationMs < minDurationMs) {
         if (direction === 'top') {
-          newStartTime = new Date(newEndTime.getTime() - 60000) // 1 min duration
+          newStartTime = new Date(newEndTime.getTime() - minDurationMs);
         } else {
-          newEndTime = new Date(newStartTime.getTime() + 60000) // 1 min duration
+          newEndTime = new Date(newStartTime.getTime() + minDurationMs);
         }
       }
 
