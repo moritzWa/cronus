@@ -3,6 +3,10 @@ import { ComparableCategory } from 'shared/categories'
 import { Category } from 'shared/dist/types'
 import { Button } from '../ui/button'
 import { CategoryItemDisplay } from './CategoryItemDisplay'
+import { toast } from '../../hooks/use-toast'
+import { trpc } from '../../utils/trpc'
+import { useAuth } from '../../contexts/AuthContext'
+import { useState } from 'react'
 
 type CategoryTemplateListProps = {
   onAdd: (category: Omit<Category, '_id' | 'userId' | 'createdAt' | 'updatedAt'>) => void
@@ -139,6 +143,27 @@ export function CategoryTemplateList({
     (template) => !existingCategoryNames.has(template.name.toLowerCase())
   )
 
+  const { token } = useAuth()
+  const createMutation = trpc.category.createCategory.useMutation({
+    onSuccess: () => {
+      toast({
+        title: 'Category Added',
+        description: `Category has been added successfully.`,
+        duration: 1500
+      })
+    },
+    onError: (err) => {
+      toast({
+        title: 'Error',
+        description: `Failed to add category: ${err.message}`,
+        variant: 'destructive',
+        duration: 1500
+      })
+    }
+  })
+
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+
   return (
     <div>
       <div className="flex justify-end">
@@ -149,6 +174,7 @@ export function CategoryTemplateList({
       <div className="space-y-4 mt-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableTemplates.map((template) => {
+            const isSelected = selectedCategories.has(template.name)
             return (
               <CategoryItemDisplay
                 key={template.name}
@@ -157,14 +183,38 @@ export function CategoryTemplateList({
                 color={template.color}
                 emoji={template.emoji}
                 actions={
-                  <Button
-                    variant="ghost"
-                    onClick={() => onAdd(template)}
-                    size="sm"
-                    disabled={isSaving}
-                  >
-                    <PlusCircle size={16} />
-                  </Button>
+                  <>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        const newSelected = new Set(selectedCategories)
+                        if (isSelected) {
+                          newSelected.delete(template.name)
+                        } else {
+                          newSelected.add(template.name)
+                        }
+                        setSelectedCategories(newSelected)
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        if (!token) {
+                          alert('Authentication token not found. Please log in again.')
+                          return
+                        }
+                        createMutation.mutate({
+                          ...template,
+                          token
+                        })
+                      }}
+                      size="sm"
+                      disabled={isSaving}
+                    >
+                      <PlusCircle size={16} />
+                    </Button>
+                  </>
                 }
               />
             )
@@ -178,6 +228,27 @@ export function CategoryTemplateList({
             </p>
           </div>
         )}
+        <Button
+          onClick={() => {
+            if (!token) {
+              alert('Authentication token not found. Please log in again.')
+              return
+            }
+            selectedCategories.forEach((categoryName) => {
+              const template = availableTemplates.find((t) => t.name === categoryName)
+              if (template) {
+                createMutation.mutate({
+                  ...template,
+                  token
+                })
+              }
+            })
+          }}
+          variant="default"
+          disabled={selectedCategories.size === 0 || isSaving}
+        >
+          Add Selected Categories
+        </Button>
       </div>
     </div>
   )
