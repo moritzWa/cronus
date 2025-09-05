@@ -65,6 +65,10 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
                     }
                 }
             }
+            // Trigger screenshot capture and OCR
+            ScreenshotManager *screenshotManager = [[ScreenshotManager alloc] init];
+            [screenshotManager takeScreenshot];
+            [screenshotManager release];
         });
     }
 }

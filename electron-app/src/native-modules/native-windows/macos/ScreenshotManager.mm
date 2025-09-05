@@ -20,14 +20,8 @@
 - (void)startPeriodicScreenshotCapture {
     [self stopPeriodicScreenshotCapture];
     
-    // Take screenshot every 30 seconds
-    screenshotTimer = [NSTimer scheduledTimerWithTimeInterval:30.0
-                                                     target:self
-                                                   selector:@selector(takeScreenshot)
-                                                   userInfo:nil
-                                                    repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:screenshotTimer forMode:NSRunLoopCommonModes];
-    MyLog(@"Screenshot timer started");
+    // Remove the periodic timer logic
+    MyLog(@"Screenshot capture will be triggered by window changes");
 }
 
 - (void)stopPeriodicScreenshotCapture {
