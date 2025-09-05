@@ -69,6 +69,13 @@ export const createTrpcClient = () =>
 
           if (shouldRefresh) {
             console.log(`⚠️ Received ${response.status} error - Token likely expired or invalid`)
+
+            // Don't attempt refresh for 502/503 server errors - they indicate server issues, not auth issues
+            if (response.status === 502 || response.status === 503) {
+              console.log('🔥 Server unavailable (502/503), skipping token refresh attempt')
+              return response
+            }
+
             if (!isRefreshing) {
               console.log('🔄 Starting token refresh process')
               isRefreshing = true
